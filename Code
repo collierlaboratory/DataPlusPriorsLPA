@@ -1,0 +1,218 @@
+#Code to determine the optimal number of kmeans clusters
+
+
+#read in the data file
+data <- read.csv("ECLS_executive function_k4.csv")
+
+data <- na.omit(data)
+
+#Step 1) Construct a function to compute the total within clusters sum of squares
+
+kmean_withinss <- function(k) {
+  cluster <- kmeans(data[, 2:4], k)
+  return (cluster$tot.withinss)
+}
+
+#Step 2) Run the algorithm n times
+
+# Set maximum cluster 
+max_k <-20 
+# Run algorithm over a range of k 
+wss <- sapply(2:max_k, kmean_withinss)
+
+#Step 3) Create a data frame with the results of the algorithm
+# Create a data frame to plot the graph
+elbow <-data.frame(2:max_k, wss)
+
+#Step 4) Plot the results
+# Plot the graph with gglop
+library(ggplot2)
+ggplot(elbow, aes(x = X2.max_k, y = wss)) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = seq(1, 20, by = 1))
+
+set.seed(20)
+
+irisCluster6 <- kmeans(data[, 2:4], 6, nstart = 20)
+
+data$cluster6 <- as.factor(irisCluster6$cluster)
+
+library(nnet)
+reg6 <- multinom(as.numeric(cluster6) ~ x8dccsscr + x8nrsscr + x8flanker,
+                 data=data)
+
+Clusters <- predict(reg6, data, type="probs")
+
+colnames(Clusters) <- c("Prob1", "Prob2", "Prob3", "Prob4", "Prob5", "Prob6")
+
+data <- cbind(data, Clusters)
+
+#get latent profiles
+X <- data[,c(2:4,6:11)]
+
+# library(tidyLPA)
+# library(dplyr)
+# data[1:nrow(data), ] %>%
+#   select(x8dccsscr, x8nrsscr, x8flanker, Prob1, Prob2, Prob3, Prob4, Prob5, Prob6) %>%
+#   single_imputation() %>%
+#   estimate_profiles(2)
+# 
+# 
+# data[1:nrow(data), ] %>%
+#   select(x8dccsscr, x8nrsscr, x8flanker, Prob1, Prob2, Prob3, Prob4, Prob5, Prob6) %>%
+#   single_imputation() %>%
+#   estimate_profiles(3)
+# 
+# data[1:nrow(data), ] %>%
+#   select(x8dccsscr, x8nrsscr, x8flanker, Prob1, Prob2, Prob3, Prob4, Prob5, Prob6) %>%
+#   single_imputation() %>%
+#   estimate_profiles(4)
+# 
+# data[1:nrow(data), ] %>%
+#   select(x8dccsscr, x8nrsscr, x8flanker, Prob1, Prob2, Prob3, Prob4, Prob5, Prob6) %>%
+#   single_imputation() %>%
+#   estimate_profiles(5)
+# 
+# data[1:nrow(data), ] %>%
+#   select(x8dccsscr, x8nrsscr, x8flanker, Prob1, Prob2, Prob3, Prob4, Prob5, Prob6) %>%
+#   single_imputation() %>%
+#   estimate_profiles(6)
+# 
+# data[1:nrow(data), ] %>%
+#   select(x8dccsscr, x8nrsscr, x8flanker, Prob1, Prob2, Prob3, Prob4, Prob5, Prob6) %>%
+#   single_imputation() %>%
+#   estimate_profiles(7)
+
+library(mclust)
+mod1 <- Mclust(X, G=2)
+LL2 <- - 2*mod1$loglik
+aic2 <- 2*mod1$df - 2*mod1$loglik
+bic2 <- BIC(mod1)
+
+output <- clustCombi(mod1, modelNames = "VII") 
+# added code to extract entropy values from the plot
+
+entPlot(output$MclustOutput$z, output$combiM, reg = c(2,3)) 
+
+
+combiM <- output$combiM
+Kmax <- ncol(output$MclustOutput$z)
+z0 <- output$MclustOutput$z
+ent <- numeric()
+
+for (K in Kmax:1) {
+  z0 <- t(combiM[[K]] %*% t(z0))
+  ent[K] <- -sum(mclust:::xlog(z0))
+}
+
+data.frame(`Number of clusters` = 1:Kmax, `Entropy` = round(ent, 3))
+
+##########3
+library(mclust)
+mod1 <- Mclust(X, G=3)
+LL3 <- - 2*mod1$loglik
+aic3 <- 2*mod1$df - 2*mod1$loglik
+bic3 <- BIC(mod1)
+
+output <- clustCombi(mod1, modelNames = "VII") 
+# added code to extract entropy values from the plot
+
+entPlot(output$MclustOutput$z, output$combiM, reg = c(2,3)) 
+
+
+combiM <- output$combiM
+Kmax <- ncol(output$MclustOutput$z)
+z0 <- output$MclustOutput$z
+ent <- numeric()
+
+for (K in Kmax:1) {
+  z0 <- t(combiM[[K]] %*% t(z0))
+  ent[K] <- -sum(mclust:::xlog(z0))
+}
+
+data.frame(`Number of clusters` = 1:Kmax, `Entropy` = round(ent, 3))
+
+###########4
+library(mclust)
+mod1 <- Mclust(X, G=4)
+LL4 <- - 2*mod1$loglik
+aic4 <- 2*mod1$df - 2*mod1$loglik
+bic4 <- BIC(mod1)
+
+output <- clustCombi(mod1, modelNames = "VII") 
+# added code to extract entropy values from the plot
+
+entPlot(output$MclustOutput$z, output$combiM, reg = c(2,3)) 
+
+
+combiM <- output$combiM
+Kmax <- ncol(output$MclustOutput$z)
+z0 <- output$MclustOutput$z
+ent <- numeric()
+
+for (K in Kmax:1) {
+  z0 <- t(combiM[[K]] %*% t(z0))
+  ent[K] <- -sum(mclust:::xlog(z0))
+}
+
+data.frame(`Number of clusters` = 1:Kmax, `Entropy` = round(ent, 3))
+
+
+
+##########5
+
+library(mclust)
+mod1 <- Mclust(X, G=5)
+LL5 <- - 2*mod1$loglik
+aic5 <- 2*mod1$df - 2*mod1$loglik
+bic5 <- BIC(mod1)
+
+output <- clustCombi(mod1, modelNames = "VII") 
+# added code to extract entropy values from the plot
+
+entPlot(output$MclustOutput$z, output$combiM, reg = c(2,3)) 
+
+
+combiM <- output$combiM
+Kmax <- ncol(output$MclustOutput$z)
+z0 <- output$MclustOutput$z
+ent <- numeric()
+
+for (K in Kmax:1) {
+  z0 <- t(combiM[[K]] %*% t(z0))
+  ent[K] <- -sum(mclust:::xlog(z0))
+}
+
+data.frame(`Number of clusters` = 1:Kmax, `Entropy` = round(ent, 3))
+
+
+############6
+
+library(mclust)
+mod1 <- Mclust(X, G=6)
+LL6 <- - 2*mod1$loglik
+aic6 <- 2*mod1$df - 2*mod1$loglik
+bic6 <- BIC(mod1)
+
+output <- clustCombi(mod1, modelNames = "VII") 
+# added code to extract entropy values from the plot
+
+entPlot(output$MclustOutput$z, output$combiM, reg = c(2,3)) 
+
+
+combiM <- output$combiM
+Kmax <- ncol(output$MclustOutput$z)
+z0 <- output$MclustOutput$z
+ent <- numeric()
+
+for (K in Kmax:1) {
+  z0 <- t(combiM[[K]] %*% t(z0))
+  ent[K] <- -sum(mclust:::xlog(z0))
+}
+
+data.frame(`Number of clusters` = 1:Kmax, `Entropy` = round(ent, 3))
+
+
+
+
